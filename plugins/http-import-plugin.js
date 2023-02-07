@@ -1,3 +1,5 @@
+const { log } = require('console');
+
 module.exports = () => ({
   name: 'esbuild:http',
   setup(build) {
@@ -13,6 +15,24 @@ module.exports = () => ({
           // 保留原路径
           path: args.path,
           // 添加namespace标识
+          namespace: 'http-url',
+        };
+      }
+    );
+
+    // 对namespace:http-url的间接依赖进行全部解析 添加前缀
+
+    build.onResolve(
+      {
+        filter: /.*/,
+        namespace: 'http-url',
+      },
+      (args) => {
+        console.log('path', args.path);
+        console.log('importer', args.importer);
+
+        return {
+          path: new URL(args.path, args.importer).toString(),
           namespace: 'http-url',
         };
       }
@@ -48,7 +68,7 @@ module.exports = () => ({
                   // 接收数据
                   res.on('data', (chunk) => chunks.push(chunk));
                   // 结束合并数据并返回
-                  res.end('end', () => resolve(Buffer.concat(chunks)));
+                  res.on('end', () => resolve(Buffer.concat(chunks)));
                 } else {
                   // 请求失败
                   reject(new Error(`GET ${url} failed : status ${statusCode}`));
@@ -57,11 +77,16 @@ module.exports = () => ({
               .on('error', reject);
           }
 
-          fetch(ar.path);
+          fetch(args.path);
         });
 
         return { contents };
       }
     );
+
+    //
+    build.onEnd((args) => {
+      console.log('onEnd metafile', args.metafile);
+    });
   },
 });

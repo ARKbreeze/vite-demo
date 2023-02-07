@@ -90,3 +90,23 @@ let envPlugin = {
 //     plugins: [envPlugin],
 //   })
 //   .catch(() => process.exit(1));
+
+const httpImport = require('./plugins/http-import-plugin.js');
+const html = require('./plugins/html-plugin.js');
+
+async function runCDNBuild() {
+  const res = await build({
+    absWorkingDir: process.cwd(),
+    entryPoints: ['./src/http.jsx'],
+    outdir: 'dist',
+    sourcemap: true,
+    bundle: true,
+    splitting: true,
+    format: 'esm',
+    metafile: true,
+    plugins: [httpImport(), html()],
+  });
+  console.log('build metafile', res);
+}
+
+runCDNBuild();
